@@ -1,11 +1,16 @@
 package main;
 
+import javax.imageio.ImageIO;
+import javax.swing.*;
 import java.applet.Applet;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.net.URL;
 
-public class StartingClass extends Applet implements Runnable, KeyListener {
+public class StartingClass extends JApplet implements Runnable, KeyListener {
     private static final boolean ALWAYS = true;
     private static final int SLEEP_TIME_IN_MS = 17;
     private static final int SIZE_WIDTH = 800;
@@ -13,6 +18,11 @@ public class StartingClass extends Applet implements Runnable, KeyListener {
     private static final Color BACKGROUND_COLOR = Color.BLACK;
     private static final boolean IS_FOCUSABLE = true;
     private static final String TITLE = "Q-Bot game!";
+
+    private Robot robot;
+    private Image image;
+    private Graphics graphics;
+    private BufferedImage character;
 
     @Override
     public void init() {
@@ -22,6 +32,7 @@ public class StartingClass extends Applet implements Runnable, KeyListener {
 
     @Override
     public void start() {
+        robot = new Robot();
         Thread thread = new Thread(this);
         thread.start();
     }
@@ -39,9 +50,30 @@ public class StartingClass extends Applet implements Runnable, KeyListener {
     @Override
     public void run() {
         while (ALWAYS) {
+            robot.update();
             repaint();
             sleep(SLEEP_TIME_IN_MS);
         }
+    }
+
+    @Override
+    public void update(Graphics g) {
+        if (image == null) {
+            image = createImage(this.getWidth(), this.getHeight());
+            graphics = image.getGraphics();
+        }
+
+        graphics.setColor(getBackground());
+        graphics.fillRect(0, 0, getWidth(), getHeight());
+        graphics.setColor(getForeground());
+        paint(graphics);
+
+        g.drawImage(image, 0, 0, this);
+    }
+
+    @Override
+    public void paint(Graphics g) {
+        g.drawImage(character, robot.getCenterX() - 61, robot.getCenterY() - 63, this);
     }
 
     private void sleep(int sleepTimeInMs) {
@@ -58,6 +90,11 @@ public class StartingClass extends Applet implements Runnable, KeyListener {
         setFocusable(IS_FOCUSABLE);
         Frame frame = (Frame) this.getParent().getParent();
         frame.setTitle(TITLE);
+        try {
+            character = ImageIO.read(this.getClass().getResource("/data/char.png"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -75,13 +112,13 @@ public class StartingClass extends Applet implements Runnable, KeyListener {
                 System.out.println("Move down");
                 break;
             case KeyEvent.VK_LEFT:
-                System.out.println("Move left");
+                robot.moveLeft();
                 break;
             case KeyEvent.VK_RIGHT:
-                System.out.println("Move right");
+                robot.moveRight();
                 break;
             case KeyEvent.VK_SPACE:
-                System.out.println("Jump");
+                robot.jump();
                 break;
         }
     }
@@ -96,13 +133,13 @@ public class StartingClass extends Applet implements Runnable, KeyListener {
                 System.out.println("Stop moving down");
                 break;
             case KeyEvent.VK_LEFT:
-                System.out.println("Stop moving left");
+                robot.stop();
                 break;
             case KeyEvent.VK_RIGHT:
-                System.out.println("Stop moving right");
+                robot.stop();
                 break;
             case KeyEvent.VK_SPACE:
-                System.out.println("Stop jumping");
+                robot.stop();
                 break;
         }
     }
